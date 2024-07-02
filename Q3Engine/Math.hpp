@@ -2,73 +2,81 @@
 
 namespace q3 {
 
-class Vector3 {
+template<typename T>
+class Vector3T {
 public:
-    constexpr Vector3() : x(0), y(0), z(0) {}
-    constexpr Vector3(float x, float y, float z) : x(x), y(y), z(z) {}
+    constexpr Vector3T() : x(0), y(0), z(0) {}
+    constexpr Vector3T(T x, T y, T z) : x(x), y(y), z(z) {}
 
     // +, -, *, /
-    constexpr Vector3 operator+(const Vector3& other) const noexcept { return {x + other.x, y + other.y, z + other.z}; }
-    constexpr Vector3 operator-(const Vector3& other) const noexcept { return {x - other.x, y - other.y, z - other.z}; }
-    constexpr Vector3 operator*(const Vector3& other) const noexcept { return {x * other.x, y * other.y, z * other.z}; }
-    constexpr Vector3 operator/(const Vector3& other) const noexcept { return {x / other.x, y / other.y, z / other.z}; }
-    constexpr Vector3 operator+(float scalar) const noexcept { return {x + scalar, y + scalar, z + scalar}; }
-    constexpr Vector3 operator-(float scalar) const noexcept { return {x - scalar, y - scalar, z - scalar}; }
-    constexpr Vector3 operator*(float scalar) const noexcept { return {x * scalar, y * scalar, z * scalar}; }
-    constexpr Vector3 operator/(float scalar) const noexcept { return {x / scalar, y / scalar, z / scalar}; }
+    constexpr Vector3T<T> operator+(const Vector3T<T>& other) const noexcept { return {x + other.x, y + other.y, z + other.z}; }
+    constexpr Vector3T<T> operator-(const Vector3T<T>& other) const noexcept { return {x - other.x, y - other.y, z - other.z}; }
+    constexpr Vector3T<T> operator*(const Vector3T<T>& other) const noexcept { return {x * other.x, y * other.y, z * other.z}; }
+    constexpr Vector3T<T> operator/(const Vector3T<T>& other) const noexcept { return {x / other.x, y / other.y, z / other.z}; }
+    constexpr Vector3T<T> operator+(T scalar) const noexcept { return {x + scalar, y + scalar, z + scalar}; }
+    constexpr Vector3T<T> operator-(T scalar) const noexcept { return {x - scalar, y - scalar, z - scalar}; }
+    constexpr Vector3T<T> operator*(T scalar) const noexcept { return {x * scalar, y * scalar, z * scalar}; }
+    constexpr Vector3T<T> operator/(T scalar) const noexcept { return {x / scalar, y / scalar, z / scalar}; }
     // +=, -=, *=, /=
-    constexpr Vector3& operator+=(const Vector3& other) noexcept { x += other.x; y += other.y; z += other.z; return *this; }
-    constexpr Vector3& operator-=(const Vector3& other) noexcept { x -= other.x; y -= other.y; z -= other.z; return *this; }
-    constexpr Vector3& operator*=(const Vector3& other) noexcept { x *= other.x; y *= other.y; z *= other.z; return *this; }
-    constexpr Vector3& operator/=(const Vector3& other) noexcept { x /= other.x; y /= other.y; z /= other.z; return *this; }
-    constexpr Vector3& operator+=(float scalar) noexcept { x += scalar; y += scalar; z += scalar; return *this; }
-    constexpr Vector3& operator-=(float scalar) noexcept { x -= scalar; y -= scalar; z -= scalar; return *this; }
-    constexpr Vector3& operator*=(float scalar) noexcept { x *= scalar; y *= scalar; z *= scalar; return *this; }
-    constexpr Vector3& operator/=(float scalar) noexcept { x /= scalar; y /= scalar; z /= scalar; return *this; }
+    constexpr Vector3T<T>& operator+=(const Vector3T<T>& other) noexcept { x += other.x; y += other.y; z += other.z; return *this; }
+    constexpr Vector3T<T>& operator-=(const Vector3T<T>& other) noexcept { x -= other.x; y -= other.y; z -= other.z; return *this; }
+    constexpr Vector3T<T>& operator*=(const Vector3T<T>& other) noexcept { x *= other.x; y *= other.y; z *= other.z; return *this; }
+    constexpr Vector3T<T>& operator/=(const Vector3T<T>& other) noexcept { x /= other.x; y /= other.y; z /= other.z; return *this; }
+    constexpr Vector3T<T>& operator+=(T scalar) noexcept { x += scalar; y += scalar; z += scalar; return *this; }
+    constexpr Vector3T<T>& operator-=(T scalar) noexcept { x -= scalar; y -= scalar; z -= scalar; return *this; }
+    constexpr Vector3T<T>& operator*=(T scalar) noexcept { x *= scalar; y *= scalar; z *= scalar; return *this; }
+    constexpr Vector3T<T>& operator/=(T scalar) noexcept { x /= scalar; y /= scalar; z /= scalar; return *this; }
     // negation
-    constexpr Vector3 operator-() const noexcept { return {-x, -y, -z}; }
+    constexpr Vector3T<T> operator-() const noexcept { return {-x, -y, -z}; }
     // comparison
-    constexpr bool operator==(const Vector3& other) const noexcept { return x == other.x && y == other.y && z == other.z; }
+    constexpr bool operator==(const Vector3T<T>& other) const noexcept { return x == other.x && y == other.y && z == other.z; }
     // dot product
-    constexpr float dot(const Vector3& other) const noexcept { return x * other.x + y * other.y + z * other.z; }
+    constexpr T dot(const Vector3T<T>& other) const noexcept { return x * other.x + y * other.y + z * other.z; }
 
-    float x, y, z;
+    T x, y, z;
 };
 
-class Vector2 {
+template<typename T>
+class Vector2T {
 public:
-    constexpr Vector2() : x(0), y(0) {}
-    constexpr Vector2(float x, float y) : x(x), y(y) {}
+    constexpr Vector2T() : x(0), y(0) {}
+    constexpr Vector2T(T x, T y) : x(x), y(y) {}
     // from Vector3
-    constexpr explicit Vector2(const Vector3& other) : x(other.x), y(other.y) {}
+    constexpr explicit Vector2T(const Vector3T<T>& other) : x(other.x), y(other.y) {}
 
     // +, -, *, /
-    constexpr Vector2 operator+(const Vector2& other) const noexcept { return {x + other.x, y + other.y}; }
-    constexpr Vector2 operator-(const Vector2& other) const noexcept { return {x - other.x, y - other.y}; }
-    constexpr Vector2 operator*(const Vector2& other) const noexcept { return {x * other.x, y * other.y}; }
-    constexpr Vector2 operator/(const Vector2& other) const noexcept { return {x / other.x, y / other.y}; }
-    constexpr Vector2 operator+(float scalar) const noexcept { return {x + scalar, y + scalar}; }
-    constexpr Vector2 operator-(float scalar) const noexcept { return {x - scalar, y - scalar}; }
-    constexpr Vector2 operator*(float scalar) const noexcept { return {x * scalar, y * scalar}; }
-    constexpr Vector2 operator/(float scalar) const noexcept { return {x / scalar, y / scalar}; }
+    constexpr Vector2T<T> operator+(const Vector2T<T>& other) const noexcept { return {x + other.x, y + other.y}; }
+    constexpr Vector2T<T> operator-(const Vector2T<T>& other) const noexcept { return {x - other.x, y - other.y}; }
+    constexpr Vector2T<T> operator*(const Vector2T<T>& other) const noexcept { return {x * other.x, y * other.y}; }
+    constexpr Vector2T<T> operator/(const Vector2T<T>& other) const noexcept { return {x / other.x, y / other.y}; }
+    constexpr Vector2T<T> operator+(T scalar) const noexcept { return {x + scalar, y + scalar}; }
+    constexpr Vector2T<T> operator-(T scalar) const noexcept { return {x - scalar, y - scalar}; }
+    constexpr Vector2T<T> operator*(T scalar) const noexcept { return {x * scalar, y * scalar}; }
+    constexpr Vector2T<T> operator/(T scalar) const noexcept { return {x / scalar, y / scalar}; }
     // +=, -=, *=, /=
-    constexpr Vector2& operator+=(const Vector2& other) noexcept { x += other.x; y += other.y; return *this; }
-    constexpr Vector2& operator-=(const Vector2& other) noexcept { x -= other.x; y -= other.y; return *this; }
-    constexpr Vector2& operator*=(const Vector2& other) noexcept { x *= other.x; y *= other.y; return *this; }
-    constexpr Vector2& operator/=(const Vector2& other) noexcept { x /= other.x; y /= other.y; return *this; }
-    constexpr Vector2& operator+=(float scalar) noexcept { x += scalar; y += scalar; return *this; }
-    constexpr Vector2& operator-=(float scalar) noexcept { x -= scalar; y -= scalar; return *this; }
-    constexpr Vector2& operator*=(float scalar) noexcept { x *= scalar; y *= scalar; return *this; }
-    constexpr Vector2& operator/=(float scalar) noexcept { x /= scalar; y /= scalar; return *this; }
+    constexpr Vector2T<T>& operator+=(const Vector2T<T>& other) noexcept { x += other.x; y += other.y; return *this; }
+    constexpr Vector2T<T>& operator-=(const Vector2T<T>& other) noexcept { x -= other.x; y -= other.y; return *this; }
+    constexpr Vector2T<T>& operator*=(const Vector2T<T>& other) noexcept { x *= other.x; y *= other.y; return *this; }
+    constexpr Vector2T<T>& operator/=(const Vector2T<T>& other) noexcept { x /= other.x; y /= other.y; return *this; }
+    constexpr Vector2T<T>& operator+=(T scalar) noexcept { x += scalar; y += scalar; return *this; }
+    constexpr Vector2T<T>& operator-=(T scalar) noexcept { x -= scalar; y -= scalar; return *this; }
+    constexpr Vector2T<T>& operator*=(T scalar) noexcept { x *= scalar; y *= scalar; return *this; }
+    constexpr Vector2T<T>& operator/=(T scalar) noexcept { x /= scalar; y /= scalar; return *this; }
     // negation
-    constexpr Vector2 operator-() const noexcept { return {-x, -y}; }
+    constexpr Vector2T<T> operator-() const noexcept { return {-x, -y}; }
     // comparison
-    constexpr bool operator==(const Vector2& other) const noexcept { return x == other.x && y == other.y; }
+    constexpr bool operator==(const Vector2T<T>& other) const noexcept { return x == other.x && y == other.y; }
     // dot product
-    constexpr float dot(const Vector2& other) const noexcept { return x * other.x + y * other.y; }
+    constexpr T dot(const Vector2T<T>& other) const noexcept { return x * other.x + y * other.y; }
 
-    float x, y;
+    T x, y;
 };
+
+using Vector3 = Vector3T<float>;
+using Vector2 = Vector2T<float>;
+
+using Vector3i = Vector3T<int32_t>;
+using Vector2i = Vector2T<int32_t>;
 
 class Vertex {
 public:
