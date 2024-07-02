@@ -72,14 +72,40 @@ public:
 
 class Vertex {
 public:
-    Vertex() : position(), w(1) {}
-    Vertex(const Vector3& position) : position(position), w(1) {}
-    Vertex(const Vector3& position, float w) : position(position), w(w) {}
-    Vertex(float x, float y, float z) : position(x, y, z), w(1) {}
-    Vertex(float x, float y, float z, float w) : position(x, y, z), w(w) {}
+    constexpr Vertex() : position(), w(1) {}
+    constexpr Vertex(const Vector3& position) : position(position), w(1) {}
+    constexpr Vertex(const Vector3& position, float w) : position(position), w(w) {}
+    constexpr Vertex(float x, float y, float z) : position(x, y, z), w(1) {}
+    constexpr Vertex(float x, float y, float z, float w) : position(x, y, z), w(w) {}
 
     Vector3 position;
     float w;
 };
+
+struct Triangle {
+    const Vector3& v0;
+    const Vector3& v1;
+    const Vector3& v2;
+};
+
+struct Barycentric {
+    float l0, l1, l2;
+};
+
+inline constexpr Barycentric calculateBarycentric(const Triangle& triangle, const Vector2& p) {
+    q3::Vector2 v0 = q3::Vector2(triangle.v1 - triangle.v0);
+    q3::Vector2 v1 = q3::Vector2(triangle.v2 - triangle.v0);
+    q3::Vector2 v2 = p - q3::Vector2(triangle.v0);
+    float d00 = v0.dot(v0);
+    float d01 = v0.dot(v1);
+    float d11 = v1.dot(v1);
+    float d20 = v2.dot(v0);
+    float d21 = v2.dot(v1);
+    float denom = d00 * d11 - d01 * d01;
+    float l1 = (d11 * d20 - d01 * d21) / denom;
+    float l2 = (d00 * d21 - d01 * d20) / denom;
+    float l0 = 1.0f - l1 - l2;
+    return {l0, l1, l2};
+}
 
 }
