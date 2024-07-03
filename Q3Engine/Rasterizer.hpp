@@ -69,12 +69,15 @@ public:
 
     inline void drawBuffer(const DataBuffer<Vector3>& vertices, const DataBuffer<uint32_t>& indices, Shader& shader, BaseDataBufferSampler& sampler) {
         for (size_t i = 0; i < indices.size(); i += 3) {
-            const Vector3& v0 = vertices[indices[i]];
-            const Vector3& v1 = vertices[indices[i + 1]];
-            const Vector3& v2 = vertices[indices[i + 2]];
-            void* data0 = sampler.getValue(i);
-            void* data1 = sampler.getValue(i + 1);
-            void* data2 = sampler.getValue(i + 2);
+            uint32_t i0 = indices[i];
+            uint32_t i1 = indices[i + 1];
+            uint32_t i2 = indices[i + 2];
+            const Vector3& v0 = vertices[i0];
+            const Vector3& v1 = vertices[i1];
+            const Vector3& v2 = vertices[i2];
+            void* data0 = sampler.getValue(i0);
+            void* data1 = sampler.getValue(i1);
+            void* data2 = sampler.getValue(i2);
             drawTriangle(v0, v1, v2, shader, data0, data1, data2);
         }
         downSample();
