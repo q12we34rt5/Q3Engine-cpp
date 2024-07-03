@@ -25,6 +25,10 @@ public:
     constexpr Vector2T<T> operator-(T scalar) const noexcept { return {x - scalar, y - scalar}; }
     constexpr Vector2T<T> operator*(T scalar) const noexcept { return {x * scalar, y * scalar}; }
     constexpr Vector2T<T> operator/(T scalar) const noexcept { return {x / scalar, y / scalar}; }
+    template<typename U> friend constexpr Vector2T<U> operator+(U scalar, const Vector2T<U>& vec) noexcept;
+    template<typename U> friend constexpr Vector2T<U> operator-(U scalar, const Vector2T<U>& vec) noexcept;
+    template<typename U> friend constexpr Vector2T<U> operator*(U scalar, const Vector2T<U>& vec) noexcept;
+    template<typename U> friend constexpr Vector2T<U> operator/(U scalar, const Vector2T<U>& vec) noexcept;
     // +=, -=, *=, /=
     constexpr Vector2T<T>& operator+=(const Vector2T<T>& other) noexcept { x += other.x; y += other.y; return *this; }
     constexpr Vector2T<T>& operator-=(const Vector2T<T>& other) noexcept { x -= other.x; y -= other.y; return *this; }
@@ -44,8 +48,12 @@ public:
     T x, y;
 };
 
-template<typename T>
-constexpr Vector2T<T>::Vector2T(const Vector3T<T>& other) noexcept : x(other.x), y(other.y) {}
+template<typename T> constexpr Vector2T<T>::Vector2T(const Vector3T<T>& other) noexcept : x(other.x), y(other.y) {}
+
+template<typename T> constexpr Vector2T<T> operator+(T scalar, const Vector2T<T>& vec) noexcept { return vec + scalar; }
+template<typename T> constexpr Vector2T<T> operator-(T scalar, const Vector2T<T>& vec) noexcept { return {scalar - vec.x, scalar - vec.y}; }
+template<typename T> constexpr Vector2T<T> operator*(T scalar, const Vector2T<T>& vec) noexcept { return vec * scalar; }
+template<typename T> constexpr Vector2T<T> operator/(T scalar, const Vector2T<T>& vec) noexcept { return {scalar / vec.x, scalar / vec.y}; }
 
 template<typename T>
 class Vector3T {
@@ -66,6 +74,10 @@ public:
     constexpr Vector3T<T> operator-(T scalar) const noexcept { return {x - scalar, y - scalar, z - scalar}; }
     constexpr Vector3T<T> operator*(T scalar) const noexcept { return {x * scalar, y * scalar, z * scalar}; }
     constexpr Vector3T<T> operator/(T scalar) const noexcept { return {x / scalar, y / scalar, z / scalar}; }
+    template<typename U> friend constexpr Vector3T<U> operator+(U scalar, const Vector3T<U>& vec) noexcept;
+    template<typename U> friend constexpr Vector3T<U> operator-(U scalar, const Vector3T<U>& vec) noexcept;
+    template<typename U> friend constexpr Vector3T<U> operator*(U scalar, const Vector3T<U>& vec) noexcept;
+    template<typename U> friend constexpr Vector3T<U> operator/(U scalar, const Vector3T<U>& vec) noexcept;
     // +=, -=, *=, /=
     constexpr Vector3T<T>& operator+=(const Vector3T<T>& other) noexcept { x += other.x; y += other.y; z += other.z; return *this; }
     constexpr Vector3T<T>& operator-=(const Vector3T<T>& other) noexcept { x -= other.x; y -= other.y; z -= other.z; return *this; }
@@ -85,8 +97,12 @@ public:
     T x, y, z;
 };
 
-template<typename T>
-constexpr Vector3T<T>::Vector3T(const Vector4T<T>& other) noexcept : x(other.position.x), y(other.position.y), z(other.position.z) {}
+template<typename T> constexpr Vector3T<T>::Vector3T(const Vector4T<T>& other) noexcept : x(other.position.x), y(other.position.y), z(other.position.z) {}
+
+template<typename T> constexpr Vector3T<T> operator+(T scalar, const Vector3T<T>& vec) noexcept { return vec + scalar; }
+template<typename T> constexpr Vector3T<T> operator-(T scalar, const Vector3T<T>& vec) noexcept { return {scalar - vec.x, scalar - vec.y, scalar - vec.z}; }
+template<typename T> constexpr Vector3T<T> operator*(T scalar, const Vector3T<T>& vec) noexcept { return vec * scalar; }
+template<typename T> constexpr Vector3T<T> operator/(T scalar, const Vector3T<T>& vec) noexcept { return {scalar / vec.x, scalar / vec.y, scalar / vec.z}; }
 
 template<typename T>
 class Vector4T {
@@ -105,6 +121,10 @@ public:
     constexpr Vector4T<T> operator-(T scalar) const noexcept { return {position - scalar, w - scalar}; }
     constexpr Vector4T<T> operator*(T scalar) const noexcept { return {position * scalar, w * scalar}; }
     constexpr Vector4T<T> operator/(T scalar) const noexcept { return {position / scalar, w / scalar}; }
+    template<typename U> friend constexpr Vector4T<U> operator+(U scalar, const Vector4T<U>& vec) noexcept;
+    template<typename U> friend constexpr Vector4T<U> operator-(U scalar, const Vector4T<U>& vec) noexcept;
+    template<typename U> friend constexpr Vector4T<U> operator*(U scalar, const Vector4T<U>& vec) noexcept;
+    template<typename U> friend constexpr Vector4T<U> operator/(U scalar, const Vector4T<U>& vec) noexcept;
     // +=, -=, *=, /=
     constexpr Vector4T<T>& operator+=(const Vector4T<T>& other) noexcept { position += other.position; w += other.w; return *this; }
     constexpr Vector4T<T>& operator-=(const Vector4T<T>& other) noexcept { position -= other.position; w -= other.w; return *this; }
@@ -126,8 +146,12 @@ public:
     T w;
 };
 
-template<typename T>
-constexpr Vector4T<T> Vector4T<T>::dot(const Matrix4T<T>& other) const noexcept {
+template<typename T> constexpr Vector4T<T> operator+(T scalar, const Vector4T<T>& vec) noexcept { return vec + scalar; }
+template<typename T> constexpr Vector4T<T> operator-(T scalar, const Vector4T<T>& vec) noexcept { return {scalar - vec.position, scalar - vec.w}; }
+template<typename T> constexpr Vector4T<T> operator*(T scalar, const Vector4T<T>& vec) noexcept { return vec * scalar; }
+template<typename T> constexpr Vector4T<T> operator/(T scalar, const Vector4T<T>& vec) noexcept { return {scalar / vec.position, scalar / vec.w}; }
+
+template<typename T> constexpr Vector4T<T> Vector4T<T>::dot(const Matrix4T<T>& other) const noexcept {
     return {
         position.x * other[0][0] + position.y * other[1][0] + position.z * other[2][0] + w * other[3][0],
         position.x * other[0][1] + position.y * other[1][1] + position.z * other[2][1] + w * other[3][1],
@@ -354,10 +378,16 @@ private:
 };
 
 template<typename T> constexpr Matrix4T<T> operator+(T scalar, const Matrix4T<T>& matrix) noexcept { return matrix + scalar; }
-template<typename T> constexpr Matrix4T<T> operator-(T scalar, const Matrix4T<T>& matrix) noexcept { return matrix - scalar; }
+template<typename T> constexpr Matrix4T<T> operator-(T scalar, const Matrix4T<T>& matrix) noexcept {
+    return {
+        {scalar - matrix[0][0], scalar - matrix[0][1], scalar - matrix[0][2], scalar - matrix[0][3]},
+        {scalar - matrix[1][0], scalar - matrix[1][1], scalar - matrix[1][2], scalar - matrix[1][3]},
+        {scalar - matrix[2][0], scalar - matrix[2][1], scalar - matrix[2][2], scalar - matrix[2][3]},
+        {scalar - matrix[3][0], scalar - matrix[3][1], scalar - matrix[3][2], scalar - matrix[3][3]}
+    };
+}
 template<typename T> constexpr Matrix4T<T> operator*(T scalar, const Matrix4T<T>& matrix) noexcept { return matrix * scalar; }
-template<typename T>
-constexpr Matrix4T<T> operator/(T scalar, const Matrix4T<T>& matrix) noexcept {
+template<typename T> constexpr Matrix4T<T> operator/(T scalar, const Matrix4T<T>& matrix) noexcept {
     return {
         {scalar / matrix[0][0], scalar / matrix[0][1], scalar / matrix[0][2], scalar / matrix[0][3]},
         {scalar / matrix[1][0], scalar / matrix[1][1], scalar / matrix[1][2], scalar / matrix[1][3]},
