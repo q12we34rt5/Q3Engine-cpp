@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cmath>
 
 namespace q3 {
 
@@ -159,22 +160,6 @@ template<typename T> constexpr Vector4T<T> Vector4T<T>::dot(const Matrix4T<T>& o
         position.x * other[0][3] + position.y * other[1][3] + position.z * other[2][3] + w * other[3][3]
     };
 }
-
-using Vector2 = Vector2T<float>;
-using Vector3 = Vector3T<float>;
-using Vector4 = Vector4T<float>;
-
-using Vector2i = Vector2T<int32_t>;
-using Vector3i = Vector3T<int32_t>;
-using Vector4i = Vector4T<int32_t>;
-
-class Vertex : public Vector4 {
-public:
-    constexpr Vertex() noexcept : Vector4(0.0f, 0.0f, 0.0f, 1.0f) {}
-    constexpr Vertex(float x, float y, float z, float w) noexcept : Vector4(x, y, z, w) {}
-    constexpr Vertex(const Vector3& other, float w) noexcept : Vector4(other, w) {}
-    constexpr Vertex(const Vector3& other) noexcept : Vector4(other, 1.0f) {}
-};
 
 template<typename T>
 class Matrix4T {
@@ -394,6 +379,90 @@ template<typename T> constexpr Matrix4T<T> operator/(T scalar, const Matrix4T<T>
         {scalar / matrix[2][0], scalar / matrix[2][1], scalar / matrix[2][2], scalar / matrix[2][3]},
         {scalar / matrix[3][0], scalar / matrix[3][1], scalar / matrix[3][2], scalar / matrix[3][3]}
     };
+}
+
+using Vector2 = Vector2T<float>;
+using Vector3 = Vector3T<float>;
+using Vector4 = Vector4T<float>;
+
+using Vector2i = Vector2T<int32_t>;
+using Vector3i = Vector3T<int32_t>;
+using Vector4i = Vector4T<int32_t>;
+
+using Matrix4 = Matrix4T<float>;
+
+class Vertex : public Vector4 {
+public:
+    constexpr Vertex() noexcept : Vector4(0.0f, 0.0f, 0.0f, 1.0f) {}
+    constexpr Vertex(float x, float y, float z, float w) noexcept : Vector4(x, y, z, w) {}
+    constexpr Vertex(const Vector3& other, float w) noexcept : Vector4(other, w) {}
+    constexpr Vertex(const Vector3& other) noexcept : Vector4(other, 1.0f) {}
+    // conversion between Vertex and Vector4
+    constexpr Vertex(const Vector4& other) noexcept : Vector4(other) {}
+    constexpr Vertex& operator=(const Vector4& other) noexcept { position.x = other.position.x; position.y = other.position.y; position.z = other.position.z; w = other.w; return *this; }
+};
+
+constexpr float degToRad(float deg) {
+    constexpr float PI = 3.14159265358979323846f;
+    return deg * PI / 180.0f;
+}
+
+constexpr void createTranslationMatrix(Matrix4& matrix, Vector3 translation) {
+    matrix = {
+        {1.0f, 0.0f, 0.0f, translation.x},
+        {0.0f, 1.0f, 0.0f, translation.y},
+        {0.0f, 0.0f, 1.0f, translation.z},
+        {0.0f, 0.0f, 0.0f, 1.0f}
+    };
+}
+constexpr Matrix4 createTranslationMatrix(Vector3 translation) {
+    Matrix4 matrix;
+    createTranslationMatrix(matrix, translation);
+    return matrix;
+}
+
+constexpr void createRotationMatrix(Matrix4& matrix, float angle, Vector3 axis) {
+    // normalize the axis
+    float length = std::sqrt(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
+    if (length != 1.0f) {
+        float inv_length = 1.0f / length;
+        axis.x *= inv_length;
+        axis.y *= inv_length;
+        axis.z *= inv_length;
+    }
+    float c = std::cos(angle);
+    float s = std::sin(angle);
+    float t = 1.0f - c;
+    float x = axis.x;
+    float y = axis.y;
+    float z = axis.z;
+    matrix = {
+        {t * x * x + c, t * x * y - s * z, t * x * z + s * y, 0.0f},
+        {t * x * y + s * z, t * y * y + c, t * y * z - s * x, 0.0f},
+        {t * x * z - s * y, t * y * z + s * x, t * z * z + c, 0.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f}
+    };
+}
+constexpr Matrix4 createRotationMatrix(float angle, Vector3 axis) {
+    Matrix4 matrix;
+    createRotationMatrix(matrix, angle, axis);
+    return matrix;
+}
+
+constexpr void createPerspectiveProjectionMatrix(Matrix4& matrix, float fov, float aspect, float near, float far) {
+    float tanhf = std::tan(fov / 2.0f);
+    float range = far - near;
+    matrix = {
+        {1.0f / (aspect * tanhf), 0.0f, 0.0f, 0.0f},
+        {0.0f, 1.0f / tanhf, 0.0f, 0.0f},
+        {0.0f, 0.0f, -(far + near) / range, -2.0f * far * near / range},
+        {0.0f, 0.0f, -1.0f, 0.0f}
+    };
+}
+constexpr Matrix4 createPerspectiveProjectionMatrix(float fov, float aspect, float near, float far) {
+    Matrix4 matrix;
+    createPerspectiveProjectionMatrix(matrix, fov, aspect, near, far);
+    return matrix;
 }
 
 struct Triangle {
