@@ -114,7 +114,7 @@ private:
                 if (barycentric.l0 < 0 || barycentric.l1 < 0 || barycentric.l2 < 0) continue;
 
                 float z = v0_.position.z * barycentric.l0 + v1_.position.z * barycentric.l1 + v2_.position.z * barycentric.l2;
-                if (z < -1.0f || z > 1.0f) continue;
+                if (z < 0.0f || z > 1.0f) continue;
                 if (z > target_depthbuffer_ptr_->getValue(x, y)) continue;
                 target_depthbuffer_ptr_->setValue(x, y, z);
 
