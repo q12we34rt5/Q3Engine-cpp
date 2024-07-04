@@ -469,6 +469,10 @@ struct Triangle {
     const Vector3& v0;
     const Vector3& v1;
     const Vector3& v2;
+    // precomputed 1/w (reciprocal) for each vertex
+    float v0_reciprocal_w;
+    float v1_reciprocal_w;
+    float v2_reciprocal_w;
 };
 
 struct Barycentric {

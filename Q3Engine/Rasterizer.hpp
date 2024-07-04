@@ -97,7 +97,7 @@ private:
         viewportTransform(v1_);
         viewportTransform(v2_);
 
-        Triangle triangle{v0_.position, v1_.position, v2_.position};
+        Triangle triangle{v0_.position, v1_.position, v2_.position, 1.0f / v0_.w, 1.0f / v1_.w, 1.0f / v2_.w};
 
         int32_t bbox_min_x = std::min({static_cast<int32_t>(v0_.position.x), static_cast<int32_t>(v1_.position.x), static_cast<int32_t>(v2_.position.x)});
         int32_t bbox_min_y = std::min({static_cast<int32_t>(v0_.position.y), static_cast<int32_t>(v1_.position.y), static_cast<int32_t>(v2_.position.y)});
@@ -137,9 +137,6 @@ private:
         v.position.x = (v.position.x + 1.0f) * width * 0.5f;
         v.position.y = (1.0f - v.position.y) * height * 0.5f;
         v.position.z = (v.position.z + 1.0f) * 0.5f;
-
-        // keep w for perspective correct interpolation
-        v.w = 1.0f / v.w;
     }
 
     inline void updateSuperSampleBuffers() {
