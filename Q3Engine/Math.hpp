@@ -489,6 +489,8 @@ inline constexpr Barycentric calculateBarycentric(const Triangle& triangle, cons
     float d20 = v2.dot(v0);
     float d21 = v2.dot(v1);
     float denom = d00 * d11 - d01 * d01;
+    if (denom < 1e-6f) // if the triangle is degenerate (i.e. area is zero < 1e-6f)
+        return {-1.0f, -1.0f, -1.0f};
     float l1 = (d11 * d20 - d01 * d21) / denom;
     float l2 = (d00 * d21 - d01 * d20) / denom;
     float l0 = 1.0f - l1 - l2;
