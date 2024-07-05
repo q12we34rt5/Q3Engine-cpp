@@ -36,15 +36,20 @@ ObjData loadObjFile(const std::string& filename) {
 
     std::string line;
     while (std::getline(file, line)) {
+        // truncate string after # (comments)
+        size_t comment_pos = line.find('#');
+        if (comment_pos != std::string::npos) {
+            line = line.substr(0, comment_pos);
+        }
+        // split line by spaces
         std::istringstream line_iss(line);
         std::vector<std::string> line_sp;
         std::string segment;
-        while (line_iss >> segment) { line_sp.push_back(segment); } // split line by spaces
-        if (line_sp.empty()) { continue; } // skip empty lines
-        if (line_sp[0][0] == '#') { continue; } // skip comments
+        while (line_iss >> segment) { line_sp.push_back(segment); }
+        // skip empty lines
+        if (line_sp.empty()) { continue; }
         // TODO:
         //   1. handle more obj file features
-        //   2. truncate string after # (comments)
 
         if (line_sp[0] == "v") {
             v.push_back(std::stof(line_sp[1]));
