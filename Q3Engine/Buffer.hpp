@@ -3,6 +3,10 @@
 #include <cstdint>
 #include <utility>
 #include <vector>
+#include <stdexcept>
+#include <type_traits>
+#include <tuple>
+#include <memory>
 
 namespace q3 {
 
@@ -60,6 +64,142 @@ public:
 
 private:
     DataBuffer<T>& buffer_;
+};
+
+/**
+ * @brief A flexible sampler for multiple data buffers of different types.
+ *
+ * AutoDataBufferSampler provides a type-safe and efficient way to handle
+ * multiple data buffers simultaneously. It uses advanced template 
+ * metaprogramming techniques to combine different buffer types at compile-time,
+ * allowing for zero-overhead abstraction.
+ *
+ * Key features:
+ * - Supports any number of q3::DataBuffer<T> instances
+ * - Automatic type deduction and safety checks at compile-time
+ * - Efficient access to combined buffer data
+ * - Compatible with the q3::BaseDataBufferSampler interface
+ *
+ * Usage example:
+ * @code
+ * q3::DataBuffer<q3::Vector3> vertices = {{1, 2, 3}};
+ * q3::DataBuffer<q3::Vector2> uvs = {{0, 1}};
+ * q3::DataBuffer<q3::Vector3> normals = {{0, 1, 0}};
+ *
+ * AutoDataBufferSampler sampler(vertices, uvs, normals);
+ * 
+ * // Define a struct that matches the buffer layout
+ * struct VertexData {
+ *     q3::Vector3& position;
+ *     q3::Vector2& uv;
+ *     q3::Vector3& normal;
+ * };
+ * 
+ * // Access combined data
+ * VertexData* data = static_cast<VertexData*>(sampler.getValue(0));
+ * 
+ * // Now you can use data->position, data->uv, data->normal
+ * @endcode
+ *
+ * @note When using getValue(), ensure that:
+ * 1. You cast the returned pointer to the correct type.
+ * 2. The number of fields in your struct matches the number of buffers.
+ * 3. The order and types of fields in the struct correspond to the order and types of the buffers.
+ */
+class AutoDataBufferSampler : public BaseDataBufferSampler {
+    // struct to hold a reference to a value of type T
+    // the second template parameter is used to avoid ambiguity in inheritance
+    template<typename T, std::size_t>
+    struct DataUnit {
+        using Type = T;
+
+        DataUnit(T& value) : value(value) {}
+        T& value;
+    };
+
+    // struct to aggregate references of different types
+    // implemented through multiple inheritance of DataUnit
+    template<typename... Types>
+    struct Data : public Types... {
+        // pass references of each DataUnit::Type to the corresponding DataUnit
+        Data(typename Types::Type&... values) : Types(values)... {}
+    };
+
+    // helper class to generate a composite data structure (Data) from a list of types
+    template<typename... Types>
+    class DataGenerator {
+        // calculate the number of types in the template parameter pack Types
+        static const std::size_t N = sizeof...(Types);
+
+        // generates a Data struct by aggregating DataUnit instances
+        // uses integer sequence to avoid duplicates in inheritance
+        template<std::size_t... I>
+        static Data<DataUnit<Types, I>...> helper(std::integer_sequence<std::size_t, I...>);
+
+    public:
+        // define Type as the result of calling helper with an integer sequence from 0 to N-1
+        // this avoids duplicates in inheritance
+        using Type = decltype(helper(std::make_integer_sequence<std::size_t, N>{}));
+    };
+
+    // abstract base class providing a generic interface for buffer access
+    class BaseBufferWrapper {
+    public:
+        virtual void* getValue(uint32_t index) = 0;
+    };
+
+    // template class for storing and accessing multiple buffers
+    template<typename... Buffers>
+    class BufferWrapper : public BaseBufferWrapper {
+        // use DataGenerator to create a composite data type
+        using Data = typename DataGenerator<typename std::remove_reference_t<Buffers>::value_type...>::Type;
+
+        // helper function to initialize the data vector
+        template<std::size_t... I>
+        void initHelper(std::index_sequence<I...>) {
+            for (std::size_t i = 0; i < std::get<0>(buffers_)->size(); i++) {
+                data.emplace_back(Data(std::get<I>(buffers_)->operator[](i)...));
+            }
+        }
+
+    public:
+        // takes references to multiple buffers
+        BufferWrapper(Buffers&... buffers) : buffers_{&buffers...}, data{} {
+            data.reserve(std::get<0>(buffers_)->size());
+            initHelper(std::make_index_sequence<sizeof...(Buffers)>());
+        }
+
+        void* getValue(uint32_t index) override {
+            return &data[index];
+        }
+
+    private:
+        std::tuple<Buffers*...> buffers_; // tuple storing pointers to buffers
+        std::vector<Data> data; // vector storing the combined data
+    };
+
+public:
+    // accepts any number of DataBuffer references
+    template<typename... Buffers>
+    AutoDataBufferSampler(Buffers&... buffers) : buffers_(std::make_unique<BufferWrapper<Buffers...>>(buffers...)) {
+        // ensure at least one buffer is provided
+        static_assert(sizeof...(Buffers) > 0, "At least one buffer is required");
+        // ensure all provided buffers are of type q3::DataBuffer<T>
+        static_assert((std::is_same_v<q3::DataBuffer<typename std::remove_reference_t<Buffers>::value_type>, std::remove_reference_t<Buffers>> && ...), "All buffers must be of type q3::DataBuffer<T>");
+
+        // ensure all buffers have the same size
+        auto bufferSize = std::get<0>(std::make_tuple(buffers...)).size();
+        if (!((buffers.size() == bufferSize) && ...)) {
+            throw std::invalid_argument("All buffers must have the same size");
+        }
+    }
+
+    void* getValue(uint32_t index) override {
+        return buffers_->getValue(index);
+    }
+
+private:
+    std::unique_ptr<BaseBufferWrapper> buffers_; // polymorphic storage for BufferWrapper
 };
 
 }
