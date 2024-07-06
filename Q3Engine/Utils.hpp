@@ -106,4 +106,66 @@ ObjData loadObjFile(const std::string& filename) {
     };
 }
 
+#pragma pack(push, 1)
+struct BMPHeader {
+    uint16_t type;
+    uint32_t file_size;
+    uint32_t reserved;
+    uint32_t offset;
+    uint32_t header_size;
+    uint32_t width;
+    uint32_t height;
+    uint16_t planes;
+    uint16_t depth;
+    uint32_t compression;
+    uint32_t image_size;
+    uint32_t x_pixels_per_meter;
+    uint32_t y_pixels_per_meter;
+    uint32_t colors_used;
+    uint32_t important_colors;
+};
+#pragma pack(pop)
+
+std::shared_ptr<q3::GraphicsBuffer<q3::RGBColor>> loadBmpTexture(const std::string& filename) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open file: " + filename);
+    }
+    // read BMP header
+    BMPHeader header;
+    file.read(reinterpret_cast<char*>(&header), sizeof(header));
+    // check if BMP file
+    if (header.type != *reinterpret_cast<const uint16_t*>("BM")) {
+        throw std::runtime_error("Invalid BMP file: " + filename);
+    }
+    // check if 24-bit BMP file
+    if (header.depth != 24) {
+        throw std::runtime_error("Unsupported BMP depth: " + std::to_string(header.depth));
+    }
+    // create image buffer
+    auto imagebuffer = std::make_shared<q3::GraphicsBuffer<q3::RGBColor>>(header.width, header.height);
+    // read image data
+    file.seekg(header.offset, std::ios::beg);
+    std::vector<uint8_t> data(header.image_size);
+    file.read(reinterpret_cast<char*>(data.data()), data.size());
+
+    uint32_t x = 0;
+    uint32_t y = header.height - 1;
+    for (size_t i = 0; i < data.size(); i += 3) {
+        // BMP image data is stored in BGR format
+        uint8_t b = data[i];
+        uint8_t g = data[i + 1];
+        uint8_t r = data[i + 2];
+        imagebuffer->setValue(x, y, q3::RGBColor{r, g, b});
+        if (x == header.width - 1) {
+            y--;
+            x = 0;
+        } else {
+            x++;
+        }
+    }
+
+    return imagebuffer;
+}
+
 }
