@@ -181,7 +181,7 @@ class AutoDataBufferSampler : public BaseDataBufferSampler {
 public:
     // accepts any number of DataBuffer references
     template<typename... Buffers>
-    AutoDataBufferSampler(Buffers&... buffers) : buffers_(std::make_unique<BufferWrapper<Buffers...>>(buffers...)) {
+    AutoDataBufferSampler(Buffers&... buffers) {
         // ensure at least one buffer is provided
         static_assert(sizeof...(Buffers) > 0, "At least one buffer is required");
         // ensure all provided buffers are of type q3::DataBuffer<T>
@@ -192,6 +192,8 @@ public:
         if (!((buffers.size() == bufferSize) && ...)) {
             throw std::invalid_argument("All buffers must have the same size");
         }
+
+        buffers_ = std::make_unique<BufferWrapper<Buffers...>>(buffers...);
     }
 
     void* getValue(uint32_t index) override {
