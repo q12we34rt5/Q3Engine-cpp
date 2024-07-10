@@ -45,6 +45,12 @@ public:
     constexpr bool operator==(const Vector2T<T>& other) const noexcept { return x == other.x && y == other.y; }
     // dot product
     constexpr T dot(const Vector2T<T>& other) const noexcept { return x * other.x + y * other.y; }
+    // norm
+    constexpr T norm() const noexcept { return std::sqrt(x * x + y * y); }
+    // in-place normalize
+    constexpr Vector2T<T>& normalize() noexcept { return *this /= norm(); }
+    // normalize
+    constexpr Vector2T<T> normalized() const noexcept { return *this / norm(); }
 
     T x, y;
 };
@@ -94,6 +100,14 @@ public:
     constexpr bool operator==(const Vector3T<T>& other) const noexcept { return x == other.x && y == other.y && z == other.z; }
     // dot product
     constexpr T dot(const Vector3T<T>& other) const noexcept { return x * other.x + y * other.y + z * other.z; }
+    // cross product
+    constexpr Vector3T<T> cross(const Vector3T<T>& other) const noexcept { return {y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.x}; }
+    // norm
+    constexpr T norm() const noexcept { return std::sqrt(x * x + y * y + z * z); }
+    // in-place normalize
+    constexpr Vector3T<T>& normalize() noexcept { return *this /= norm(); }
+    // normalize
+    constexpr Vector3T<T> normalized() const noexcept { return *this / norm(); }
 
     T x, y, z;
 };
@@ -142,6 +156,12 @@ public:
     // dot product
     constexpr T dot(const Vector4T<T>& other) const noexcept { return position.dot(other.position) + w * other.w; }
     constexpr Vector4T<T> dot(const Matrix4T<T>& other) const noexcept;
+    // norm
+    constexpr T norm() const noexcept { return std::sqrt(position.x * position.x + position.y * position.y + position.z * position.z + w * w); }
+    // in-place normalize
+    constexpr Vector4T<T>& normalize() noexcept { return *this /= norm(); }
+    // normalize
+    constexpr Vector4T<T> normalized() const noexcept { return *this / norm(); }
 
     Vector3T<T> position;
     T w;
@@ -407,17 +427,65 @@ constexpr float degToRad(float deg) {
     return deg * PI / 180.0f;
 }
 
-constexpr void createTranslationMatrix(Matrix4& matrix, Vector3 translation) {
+constexpr void createScaleMatrix(Matrix4& matrix, Vector3 scale) {
     matrix = {
-        {1.0f, 0.0f, 0.0f, translation.x},
-        {0.0f, 1.0f, 0.0f, translation.y},
-        {0.0f, 0.0f, 1.0f, translation.z},
+        {scale.x, 0.0f, 0.0f, 0.0f},
+        {0.0f, scale.y, 0.0f, 0.0f},
+        {0.0f, 0.0f, scale.z, 0.0f},
         {0.0f, 0.0f, 0.0f, 1.0f}
     };
 }
-constexpr Matrix4 createTranslationMatrix(Vector3 translation) {
+constexpr Matrix4 createScaleMatrix(Vector3 scale) {
     Matrix4 matrix;
-    createTranslationMatrix(matrix, translation);
+    createScaleMatrix(matrix, scale);
+    return matrix;
+}
+
+constexpr void createRotationXMatrix(Matrix4& matrix, float angle) {
+    float c = std::cos(angle);
+    float s = std::sin(angle);
+    matrix = {
+        {1.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, c, -s, 0.0f},
+        {0.0f, s, c, 0.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f}
+    };
+}
+constexpr Matrix4 createRotationXMatrix(float angle) {
+    Matrix4 matrix;
+    createRotationXMatrix(matrix, angle);
+    return matrix;
+}
+
+constexpr void createRotationYMatrix(Matrix4& matrix, float angle) {
+    float c = std::cos(angle);
+    float s = std::sin(angle);
+    matrix = {
+        {c, 0.0f, s, 0.0f},
+        {0.0f, 1.0f, 0.0f, 0.0f},
+        {-s, 0.0f, c, 0.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f}
+    };
+}
+constexpr Matrix4 createRotationYMatrix(float angle) {
+    Matrix4 matrix;
+    createRotationYMatrix(matrix, angle);
+    return matrix;
+}
+
+constexpr void createRotationZMatrix(Matrix4& matrix, float angle) {
+    float c = std::cos(angle);
+    float s = std::sin(angle);
+    matrix = {
+        {c, -s, 0.0f, 0.0f},
+        {s, c, 0.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f}
+    };
+}
+constexpr Matrix4 createRotationZMatrix(float angle) {
+    Matrix4 matrix;
+    createRotationZMatrix(matrix, angle);
     return matrix;
 }
 
@@ -449,6 +517,20 @@ constexpr Matrix4 createRotationMatrix(float angle, Vector3 axis) {
     return matrix;
 }
 
+constexpr void createTranslationMatrix(Matrix4& matrix, Vector3 translation) {
+    matrix = {
+        {1.0f, 0.0f, 0.0f, translation.x},
+        {0.0f, 1.0f, 0.0f, translation.y},
+        {0.0f, 0.0f, 1.0f, translation.z},
+        {0.0f, 0.0f, 0.0f, 1.0f}
+    };
+}
+constexpr Matrix4 createTranslationMatrix(Vector3 translation) {
+    Matrix4 matrix;
+    createTranslationMatrix(matrix, translation);
+    return matrix;
+}
+
 constexpr void createPerspectiveProjectionMatrix(Matrix4& matrix, float fov, float aspect, float near, float far) {
     float tanhf = std::tan(fov / 2.0f);
     float range = far - near;
@@ -462,6 +544,40 @@ constexpr void createPerspectiveProjectionMatrix(Matrix4& matrix, float fov, flo
 constexpr Matrix4 createPerspectiveProjectionMatrix(float fov, float aspect, float near, float far) {
     Matrix4 matrix;
     createPerspectiveProjectionMatrix(matrix, fov, aspect, near, far);
+    return matrix;
+}
+
+constexpr void createOrthographicProjectionMatrix(Matrix4& matrix, float left, float right, float bottom, float top, float near, float far) {
+    float rml = right - left;
+    float tmb = top - bottom;
+    float fmn = far - near;
+    matrix = {
+        {2.0f / rml, 0.0f, 0.0f, -(right + left) / rml},
+        {0.0f, 2.0f / tmb, 0.0f, -(top + bottom) / tmb},
+        {0.0f, 0.0f, -2.0f / fmn, -(far + near) / fmn},
+        {0.0f, 0.0f, 0.0f, 1.0f}
+    };
+}
+constexpr Matrix4 createOrthographicProjectionMatrix(float left, float right, float bottom, float top, float near, float far) {
+    Matrix4 matrix;
+    createOrthographicProjectionMatrix(matrix, left, right, top, bottom, near, far);
+    return matrix;
+}
+
+constexpr void createViewMatrix(Matrix4& matrix, const Vector3& eye, const Vector3& center, const Vector3& up) {
+    Vector3 f = (center - eye).normalized();
+    Vector3 s = f.cross(up).normalized();
+    Vector3 u = s.cross(f);
+    matrix = {
+        {s.x, s.y, s.z, -s.dot(eye)},
+        {u.x, u.y, u.z, -u.dot(eye)},
+        {-f.x, -f.y, -f.z, f.dot(eye)},
+        {0.0f, 0.0f, 0.0f, 1.0f}
+    };
+}
+constexpr Matrix4 createViewMatrix(const Vector3& eye, const Vector3& center, const Vector3& up) {
+    Matrix4 matrix;
+    createViewMatrix(matrix, eye, center, up);
     return matrix;
 }
 
