@@ -29,16 +29,9 @@ public:
 
 public:
     Rasterizer(std::shared_ptr<GraphicsBuffer<RGBColor>> framebuffer, std::shared_ptr<GraphicsBuffer<float>> depthbuffer)
-        : framebuffer_(framebuffer), depthbuffer_(depthbuffer),
-          super_sample_framebuffer_(nullptr), super_sample_depthbuffer_(nullptr),
-          target_framebuffer_ptr_(nullptr), target_depthbuffer_ptr_(nullptr),
+        : target_framebuffer_ptr_(nullptr), target_depthbuffer_ptr_(nullptr),
           aa_mode_(AA_MODE::NONE) {
-        if (framebuffer == nullptr) { throw std::runtime_error("framebuffer is nullptr"); }
-        if (depthbuffer == nullptr) { throw std::runtime_error("depthbuffer is nullptr"); }
-        if (framebuffer->getWidth() != depthbuffer->getWidth() || framebuffer->getHeight() != depthbuffer->getHeight()) {
-            throw std::runtime_error("framebuffer and depthbuffer have different sizes");
-        }
-        updateSuperSampleBuffers();
+        setBuffers(framebuffer, depthbuffer);
     }
 
     inline void setBuffers(std::shared_ptr<GraphicsBuffer<RGBColor>> framebuffer, std::shared_ptr<GraphicsBuffer<float>> depthbuffer) {
