@@ -58,12 +58,12 @@ public:
 template<typename T>
 class DataBufferSampler : public BaseDataBufferSampler {
 public:
-    DataBufferSampler(DataBuffer<T>& buffer) : buffer_(buffer) {}
+    DataBufferSampler(std::shared_ptr<DataBuffer<T>> buffer) : buffer_(buffer) {}
 
-    void* getValue(uint32_t index) override { return &buffer_[index]; }
+    void* getValue(uint32_t index) override { return &buffer_->operator[](index); }
 
 private:
-    DataBuffer<T>& buffer_;
+    std::shared_ptr<DataBuffer<T>> buffer_;
 };
 
 /**
@@ -164,7 +164,7 @@ class AutoDataBufferSampler : public BaseDataBufferSampler {
 
     public:
         // takes references to multiple buffers
-        BufferWrapper(Buffers&... buffers) : buffers_{&buffers...}, data{} {
+        BufferWrapper(std::shared_ptr<Buffers>... buffers) : buffers_{buffers...}, data{} {
             data.reserve(std::get<0>(buffers_)->size());
             initHelper(std::make_index_sequence<sizeof...(Buffers)>());
         }
@@ -174,22 +174,22 @@ class AutoDataBufferSampler : public BaseDataBufferSampler {
         }
 
     private:
-        std::tuple<Buffers*...> buffers_; // tuple storing pointers to buffers
-        std::vector<Data> data; // vector storing the combined data
+        std::tuple<std::shared_ptr<Buffers>...> buffers_;
+        std::vector<Data> data; // storing the combined data
     };
 
 public:
-    // accepts any number of DataBuffer references
+    // accepts any number of DataBuffers
     template<typename... Buffers>
-    AutoDataBufferSampler(Buffers&... buffers) {
+    AutoDataBufferSampler(std::shared_ptr<Buffers>... buffers) {
         // ensure at least one buffer is provided
         static_assert(sizeof...(Buffers) > 0, "At least one buffer is required");
         // ensure all provided buffers are of type q3::DataBuffer<T>
         static_assert((std::is_same_v<q3::DataBuffer<typename std::remove_reference_t<Buffers>::value_type>, std::remove_reference_t<Buffers>> && ...), "All buffers must be of type q3::DataBuffer<T>");
 
         // ensure all buffers have the same size
-        auto bufferSize = std::get<0>(std::make_tuple(buffers...)).size();
-        if (!((buffers.size() == bufferSize) && ...)) {
+        auto bufferSize = std::get<0>(std::make_tuple(buffers...))->size();
+        if (!((buffers->size() == bufferSize) && ...)) {
             throw std::invalid_argument("All buffers must have the same size");
         }
 
