@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Buffer.hpp"
+#include "RGBColor.hpp"
 #include "Math.hpp"
 
 #include <cstdint>
