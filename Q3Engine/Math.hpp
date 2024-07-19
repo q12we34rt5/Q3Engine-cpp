@@ -560,7 +560,7 @@ constexpr void createOrthographicProjectionMatrix(Matrix4& matrix, float left, f
 }
 constexpr Matrix4 createOrthographicProjectionMatrix(float left, float right, float bottom, float top, float near, float far) {
     Matrix4 matrix;
-    createOrthographicProjectionMatrix(matrix, left, right, top, bottom, near, far);
+    createOrthographicProjectionMatrix(matrix, left, right, bottom, top, near, far);
     return matrix;
 }
 
