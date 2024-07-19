@@ -185,7 +185,7 @@ public:
         // ensure at least one buffer is provided
         static_assert(sizeof...(Buffers) > 0, "At least one buffer is required");
         // ensure all provided buffers are of type q3::DataBuffer<T>
-        static_assert((std::is_same_v<q3::DataBuffer<typename std::remove_reference_t<Buffers>::value_type>, std::remove_reference_t<Buffers>> && ...), "All buffers must be of type q3::DataBuffer<T>");
+        static_assert((std::is_same_v<DataBuffer<typename std::remove_reference_t<Buffers>::value_type>, std::remove_reference_t<Buffers>> && ...), "All buffers must be of type q3::DataBuffer<T>");
 
         // ensure all buffers have the same size
         auto bufferSize = std::get<0>(std::make_tuple(buffers...))->size();

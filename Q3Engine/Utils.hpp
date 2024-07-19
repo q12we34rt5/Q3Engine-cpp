@@ -16,10 +16,10 @@
 namespace q3 {
 
 struct ObjData {
-    std::shared_ptr<q3::DataBuffer<q3::Vector3>> vertices;
-    std::shared_ptr<q3::DataBuffer<q3::Vector2>> uvs;
-    std::shared_ptr<q3::DataBuffer<q3::Vector3>> normals;
-    std::shared_ptr<q3::DataBuffer<uint32_t>> indices;
+    std::shared_ptr<DataBuffer<Vector3>> vertices;
+    std::shared_ptr<DataBuffer<Vector2>> uvs;
+    std::shared_ptr<DataBuffer<Vector3>> normals;
+    std::shared_ptr<DataBuffer<uint32_t>> indices;
 };
 
 ObjData loadObjFile(const std::string& filename) {
@@ -33,7 +33,7 @@ ObjData loadObjFile(const std::string& filename) {
     std::vector<float> vn;
     std::map<std::string, uint32_t> indices_map;
     uint32_t vertex_map_size = 0;
-    q3::DataBuffer<uint32_t> indices;
+    DataBuffer<uint32_t> indices;
 
     std::string line;
     while (std::getline(file, line)) {
@@ -77,9 +77,9 @@ ObjData loadObjFile(const std::string& filename) {
         }
     }
 
-    q3::DataBuffer<q3::Vector3> vertices(vertex_map_size);
-    q3::DataBuffer<q3::Vector2> uvs(vertex_map_size);
-    q3::DataBuffer<q3::Vector3> normals(vertex_map_size);
+    DataBuffer<Vector3> vertices(vertex_map_size);
+    DataBuffer<Vector2> uvs(vertex_map_size);
+    DataBuffer<Vector3> normals(vertex_map_size);
 
     for (const auto& [key, value] : indices_map) {
         std::istringstream key_iss(key);
@@ -100,10 +100,10 @@ ObjData loadObjFile(const std::string& filename) {
         }
     }
     return {
-        std::make_shared<q3::DataBuffer<q3::Vector3>>(std::move(vertices)),
-        std::make_shared<q3::DataBuffer<q3::Vector2>>(std::move(uvs)),
-        std::make_shared<q3::DataBuffer<q3::Vector3>>(std::move(normals)),
-        std::make_shared<q3::DataBuffer<uint32_t>>(std::move(indices))
+        std::make_shared<DataBuffer<Vector3>>(std::move(vertices)),
+        std::make_shared<DataBuffer<Vector2>>(std::move(uvs)),
+        std::make_shared<DataBuffer<Vector3>>(std::move(normals)),
+        std::make_shared<DataBuffer<uint32_t>>(std::move(indices))
     };
 }
 
@@ -127,7 +127,7 @@ struct BMPHeader {
 };
 #pragma pack(pop)
 
-std::shared_ptr<q3::GraphicsBuffer<q3::RGBColor>> loadBmpTexture(const std::string& filename) {
+std::shared_ptr<GraphicsBuffer<RGBColor>> loadBmpTexture(const std::string& filename) {
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open file: " + filename);
@@ -144,7 +144,7 @@ std::shared_ptr<q3::GraphicsBuffer<q3::RGBColor>> loadBmpTexture(const std::stri
         throw std::runtime_error("Unsupported BMP depth: " + std::to_string(header.depth));
     }
     // create image buffer
-    auto imagebuffer = std::make_shared<q3::GraphicsBuffer<q3::RGBColor>>(header.width, header.height);
+    auto imagebuffer = std::make_shared<GraphicsBuffer<RGBColor>>(header.width, header.height);
     // read image data
     file.seekg(header.offset, std::ios::beg);
     std::vector<uint8_t> data(header.image_size);
@@ -157,7 +157,7 @@ std::shared_ptr<q3::GraphicsBuffer<q3::RGBColor>> loadBmpTexture(const std::stri
         uint8_t b = data[i];
         uint8_t g = data[i + 1];
         uint8_t r = data[i + 2];
-        imagebuffer->setValue(x, y, q3::RGBColor{r, g, b});
+        imagebuffer->setValue(x, y, RGBColor{r, g, b});
         if (x == header.width - 1) {
             y--;
             x = 0;

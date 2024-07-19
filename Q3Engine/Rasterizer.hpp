@@ -111,13 +111,13 @@ private:
                 if (z > target_depthbuffer_ptr_->getValue(x, y)) continue;
                 target_depthbuffer_ptr_->setValue(x, y, z);
 
-                q3::RGBColor color = shader.fragmentShader(triangle, barycentric, data0, data1, data2, context);
+                RGBColor color = shader.fragmentShader(triangle, barycentric, data0, data1, data2, context);
                 target_framebuffer_ptr_->setValue(x, y, color);
             }
         }
     }
 
-    inline void viewportTransform(q3::Vertex& v) const {
+    inline void viewportTransform(Vertex& v) const {
         float width = static_cast<float>(target_framebuffer_ptr_->getWidth());
         float height = static_cast<float>(target_framebuffer_ptr_->getHeight());
 

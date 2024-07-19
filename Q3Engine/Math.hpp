@@ -596,9 +596,9 @@ struct Barycentric {
 };
 
 inline constexpr Barycentric calculateBarycentric(const Triangle& triangle, const Vector2& p) {
-    q3::Vector2 v0 = q3::Vector2(triangle.v1 - triangle.v0);
-    q3::Vector2 v1 = q3::Vector2(triangle.v2 - triangle.v0);
-    q3::Vector2 v2 = p - q3::Vector2(triangle.v0);
+    Vector2 v0 = Vector2(triangle.v1 - triangle.v0);
+    Vector2 v1 = Vector2(triangle.v2 - triangle.v0);
+    Vector2 v2 = p - Vector2(triangle.v0);
     float d00 = v0.dot(v0);
     float d01 = v0.dot(v1);
     float d11 = v1.dot(v1);
