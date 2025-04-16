@@ -19,6 +19,14 @@ public:
     template<typename U>
     GraphicsBuffer(uint32_t width, uint32_t height, U&& value) 
         : width_(width), height_(height), data_(width * height, std::forward<U>(value)) {}
+    GraphicsBuffer(const std::vector<T>& data, uint32_t width, uint32_t height)
+        : width_(width), height_(height), data_(data) {
+        if (data_.size() != width * height) { throw std::invalid_argument("Data size does not match the specified width and height."); }
+    }
+    GraphicsBuffer(std::vector<T>&& data, uint32_t width, uint32_t height)
+        : width_(width), height_(height), data_(std::move(data)) {
+        if (data_.size() != width * height) { throw std::invalid_argument("Data size does not match the specified width and height."); }
+    }
 
     T* operator[](uint32_t y) { return data_.data() + y * width_; }
     const T* operator[](uint32_t y) const { return data_.data() + y * width_; }
