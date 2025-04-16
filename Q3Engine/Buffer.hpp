@@ -77,79 +77,35 @@ private:
 /**
  * @brief A flexible sampler for multiple data buffers of different types.
  *
- * AutoDataBufferSampler provides a type-safe and efficient way to handle
- * multiple data buffers simultaneously. It uses advanced template 
- * metaprogramming techniques to combine different buffer types at compile-time,
- * allowing for zero-overhead abstraction.
+ * AutoDataBufferSampler provides a type-safe and efficient way to access
+ * multiple std::shared_ptr<q3::DataBuffer<T>> instances simultaneously. It aggregates
+ * element-wise references from all buffers into a std::tuple, enabling safe and
+ * structured access to per-element data across multiple streams.
  *
  * Key features:
- * - Supports any number of q3::DataBuffer<T> instances
- * - Automatic type deduction and safety checks at compile-time
- * - Efficient access to combined buffer data
+ * - Supports any number of std::shared_ptr<q3::DataBuffer<T>> buffers
+ * - Aggregates data as std::tuple<T1&, T2&, ...> for zero-overhead reference access
+ * - Ensures all buffers are non-null and of equal size at runtime
  * - Compatible with the q3::BaseDataBufferSampler interface
  *
  * Usage example:
  * @code
- * q3::DataBuffer<q3::Vector3> vertices = {{1, 2, 3}};
- * q3::DataBuffer<q3::Vector2> uvs = {{0, 1}};
- * q3::DataBuffer<q3::Vector3> normals = {{0, 1, 0}};
+ * auto uvs     = std::make_shared<q3::DataBuffer<q3::Vector2>>({{0, 1}});
+ * auto normals = std::make_shared<q3::DataBuffer<q3::Vector3>>({{0, 1, 0}});
  *
- * AutoDataBufferSampler sampler(vertices, uvs, normals);
- * 
- * // Define a struct that matches the buffer layout
- * struct VertexData {
- *     q3::Vector3& position;
- *     q3::Vector2& uv;
- *     q3::Vector3& normal;
- * };
- * 
- * // Access combined data
- * VertexData* data = static_cast<VertexData*>(sampler.getValue(0));
- * 
- * // Now you can use data->position, data->uv, data->normal
+ * AutoDataBufferSampler sampler(uvs, normals);
+ *
+ * // Access combined data as a tuple of references
+ * auto& [uv, normal] = *static_cast<std::tuple<q3::Vector2&, q3::Vector3&>*>(sampler.getValue(0));
+ *
+ * // Now you can directly use uv and normal
  * @endcode
  *
- * @note When using getValue(), ensure that:
- * 1. You cast the returned pointer to the correct type.
- * 2. The number of fields in your struct matches the number of buffers.
- * 3. The order and types of fields in the struct correspond to the order and types of the buffers.
+ * @note When using getValue(), ensure:
+ * 1. You cast the returned pointer to the correct std::tuple type.
+ * 2. The number, order, and types in the tuple exactly match the buffers passed in.
  */
 class AutoDataBufferSampler : public BaseDataBufferSampler {
-    // struct to hold a reference to a value of type T
-    // the second template parameter is used to avoid ambiguity in inheritance
-    template<typename T, std::size_t>
-    struct DataUnit {
-        using Type = T;
-
-        DataUnit(T& value) : value(value) {}
-        T& value;
-    };
-
-    // struct to aggregate references of different types
-    // implemented through multiple inheritance of DataUnit
-    template<typename... Types>
-    struct Data : public Types... {
-        // pass references of each DataUnit::Type to the corresponding DataUnit
-        Data(typename Types::Type&... values) : Types(values)... {}
-    };
-
-    // helper class to generate a composite data structure (Data) from a list of types
-    template<typename... Types>
-    class DataGenerator {
-        // calculate the number of types in the template parameter pack Types
-        static const std::size_t N = sizeof...(Types);
-
-        // generates a Data struct by aggregating DataUnit instances
-        // uses integer sequence to avoid duplicates in inheritance
-        template<std::size_t... I>
-        static Data<DataUnit<Types, I>...> helper(std::integer_sequence<std::size_t, I...>);
-
-    public:
-        // define Type as the result of calling helper with an integer sequence from 0 to N-1
-        // this avoids duplicates in inheritance
-        using Type = decltype(helper(std::make_integer_sequence<std::size_t, N>{}));
-    };
-
     // abstract base class providing a generic interface for buffer access
     class BaseBufferWrapper {
     public:
@@ -159,8 +115,7 @@ class AutoDataBufferSampler : public BaseDataBufferSampler {
     // template class for storing and accessing multiple buffers
     template<typename... Buffers>
     class BufferWrapper : public BaseBufferWrapper {
-        // use DataGenerator to create a composite data type
-        using Data = typename DataGenerator<typename std::remove_reference_t<Buffers>::value_type...>::Type;
+        using Data = std::tuple<typename Buffers::reference...>;
 
         // helper function to initialize the data vector
         template<std::size_t... I>
@@ -186,6 +141,12 @@ class AutoDataBufferSampler : public BaseDataBufferSampler {
         std::vector<Data> data; // storing the combined data
     };
 
+    // helper function to get the size of the first buffer
+    template<typename FirstBuffer, typename... RestBuffers>
+    static std::size_t getFirstBufferSize(std::shared_ptr<FirstBuffer>& first, std::shared_ptr<RestBuffers>&...) {
+        return first->size();
+    }
+
 public:
     // accepts any number of DataBuffers
     template<typename... Buffers>
@@ -193,13 +154,12 @@ public:
         // ensure at least one buffer is provided
         static_assert(sizeof...(Buffers) > 0, "At least one buffer is required");
         // ensure all provided buffers are of type q3::DataBuffer<T>
-        static_assert((std::is_same_v<DataBuffer<typename std::remove_reference_t<Buffers>::value_type>, std::remove_reference_t<Buffers>> && ...), "All buffers must be of type q3::DataBuffer<T>");
-
+        static_assert((std::is_same_v<DataBuffer<typename std::remove_reference_t<Buffers>::value_type>, Buffers> && ...), "All buffers must be of type std::shared_ptr<q3::DataBuffer<T>>");
+        // ensure all provided buffers are not nullptr
+        if (((buffers == nullptr) || ...)) { throw std::invalid_argument("All buffers must be non-null"); }
         // ensure all buffers have the same size
-        auto bufferSize = std::get<0>(std::make_tuple(buffers...))->size();
-        if (!((buffers->size() == bufferSize) && ...)) {
-            throw std::invalid_argument("All buffers must have the same size");
-        }
+        auto buffer_size = getFirstBufferSize(buffers...);
+        if (!((buffers->size() == buffer_size) && ...)) { throw std::invalid_argument("All buffers must have the same size"); }
 
         buffers_ = std::make_unique<BufferWrapper<Buffers...>>(buffers...);
     }
