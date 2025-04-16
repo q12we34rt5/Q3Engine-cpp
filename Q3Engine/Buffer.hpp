@@ -66,7 +66,11 @@ public:
 template<typename T>
 class DataBufferSampler : public BaseDataBufferSampler {
 public:
+    DataBufferSampler() : buffer_(nullptr) {}
+
     DataBufferSampler(std::shared_ptr<DataBuffer<T>> buffer) : buffer_(buffer) {}
+
+    void setBuffer(std::shared_ptr<DataBuffer<T>> buffer) { buffer_ = buffer; }
 
     void* getValue(uint32_t index) override { return &buffer_->operator[](index); }
 
