@@ -48,7 +48,7 @@ public:
     std::shared_ptr<GraphicsBuffer<RGBColor>> getFramebuffer() const { return framebuffer_; }
     std::shared_ptr<GraphicsBuffer<float>> getDepthbuffer() const { return depthbuffer_; }
 
-    inline void clearFrameBuffer(const RGBColor& color = RGBColor()) {
+    inline void clearFrameBuffer(const RGBColor& color = RGBColor{0, 0, 0, 0}) {
         target_framebuffer_ptr_->fill(color);
     }
     inline void clearDepthBuffer(float value = 1.0f) {
@@ -77,6 +77,18 @@ public:
     }
 
 private:
+    inline RGBColor alphaBlend(const RGBColor& src, const RGBColor& dst) {
+        float src_alpha = src.a / 255.0f;
+        float inv_alpha = 1.0f - src_alpha;
+
+        RGBColor result;
+        result.r = static_cast<uint8_t>(src.r * src_alpha + dst.r * inv_alpha);
+        result.g = static_cast<uint8_t>(src.g * src_alpha + dst.g * inv_alpha);
+        result.b = static_cast<uint8_t>(src.b * src_alpha + dst.b * inv_alpha);
+        result.a = static_cast<uint8_t>(std::min(255.0f, src.a + dst.a * inv_alpha));
+        return result;
+    }
+
     inline void drawTriangle(const Vector3& v0, const Vector3& v1, const Vector3& v2, Shader& shader, void* data0 = nullptr, void* data1 = nullptr, void* data2 = nullptr) {
         Vertex v0_(v0);
         Vertex v1_(v1);
@@ -109,10 +121,16 @@ private:
                 float z = v0_.position.z * barycentric.l0 + v1_.position.z * barycentric.l1 + v2_.position.z * barycentric.l2;
                 if (z < 0.0f || z > 1.0f) continue;
                 if (z > target_depthbuffer_ptr_->getValue(x, y)) continue;
-                target_depthbuffer_ptr_->setValue(x, y, z);
 
-                RGBColor color = shader.fragmentShader(triangle, barycentric, data0, data1, data2, context);
-                target_framebuffer_ptr_->setValue(x, y, color);
+                RGBColor src_color = shader.fragmentShader(triangle, barycentric, data0, data1, data2, context);
+                if (src_color.a == 0) continue;
+                RGBColor dst_color = target_framebuffer_ptr_->getValue(x, y);
+                RGBColor final_color = alphaBlend(src_color, dst_color);
+                target_framebuffer_ptr_->setValue(x, y, final_color);
+
+                if (src_color.a == 255) {
+                    target_depthbuffer_ptr_->setValue(x, y, z);
+                }
             }
         }
     }
@@ -177,18 +195,21 @@ private:
             for (uint32_t y = 0; y < framebuffer_->getHeight(); y++) {
                 for (uint32_t x = 0; x < framebuffer_->getWidth(); x++) {
                     Vector3i color;
-                    float depth = 0.0f;
+                    int alpha = 0;
+                    float min_depth = std::numeric_limits<float>::max();
                     for (uint32_t j = 0; j < ssaa; j++) {
                         for (uint32_t i = 0; i < ssaa; i++) {
                             const RGBColor& c = super_sample_framebuffer_->getValue(x * ssaa + i, y * ssaa + j);
                             color.x += c.r; color.y += c.g; color.z += c.b;
-                            depth += super_sample_depthbuffer_->getValue(x * ssaa + i, y * ssaa + j);
+                            alpha += c.a;
+                            float depth = super_sample_depthbuffer_->getValue(x * ssaa + i, y * ssaa + j);
+                            min_depth = std::min(min_depth, depth);
                         }
                     }
                     color /= ssaa2f;
-                    depth /= ssaa2f;
-                    framebuffer_->setValue(x, y, RGBColor{static_cast<uint8_t>(color.x), static_cast<uint8_t>(color.y), static_cast<uint8_t>(color.z)});
-                    depthbuffer_->setValue(x, y, depth);
+                    alpha /= ssaa2f;
+                    framebuffer_->setValue(x, y, RGBColor{static_cast<uint8_t>(color.x), static_cast<uint8_t>(color.y), static_cast<uint8_t>(color.z), static_cast<uint8_t>(alpha)});
+                    depthbuffer_->setValue(x, y, min_depth);
                 }
             }
         };
