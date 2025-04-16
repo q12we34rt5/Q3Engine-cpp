@@ -127,7 +127,7 @@ struct BMPHeader {
 };
 #pragma pack(pop)
 
-std::shared_ptr<GraphicsBuffer<RGBColor>> loadBmpTexture(const std::string& filename) {
+std::shared_ptr<GraphicsBuffer<RGBColor>> loadBmpTexture(const std::string& filename, RGBColor transparency_key = RGBColor{0, 0, 0, 0}) {
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open file: " + filename);
@@ -136,36 +136,62 @@ std::shared_ptr<GraphicsBuffer<RGBColor>> loadBmpTexture(const std::string& file
     BMPHeader header;
     file.read(reinterpret_cast<char*>(&header), sizeof(header));
     // check if BMP file
-    if (header.type != *reinterpret_cast<const uint16_t*>("BM")) {
+    if (header.type != 0x4D42) {
         throw std::runtime_error("Invalid BMP file: " + filename);
+    }
+    // check if BMP file is valid
+    if (header.planes != 1) {
+        throw std::runtime_error("Invalid number of planes in BMP file");
     }
     // check if 24-bit BMP file
     if (header.depth != 24) {
         throw std::runtime_error("Unsupported BMP depth: " + std::to_string(header.depth));
     }
+    // check if BMP file is compressed
+    // (note: BMP compression is not supported in this implementation)
+    if (header.compression != 0) {
+        throw std::runtime_error("Compressed BMP not supported");
+    }
+    // check if image size is 0
+    if (header.image_size == 0) {
+        uint32_t row_size = (header.width * 3 + 3) & ~3; // row size padded to 4 bytes
+        header.image_size = row_size * header.height;
+    }
+    // check if file size is valid
+    file.seekg(0, std::ios::end);
+    auto file_size = file.tellg();
+    if (file_size < header.offset + header.image_size) {
+        throw std::runtime_error("Invalid BMP file size: " + filename);
+    }
     // create image buffer
     auto imagebuffer = std::make_shared<GraphicsBuffer<RGBColor>>(header.width, header.height);
     // read image data
-    file.seekg(header.offset, std::ios::beg);
+    file.seekg(header.offset, std::ios::beg); // move to pixel data
     std::vector<uint8_t> data(header.image_size);
-    file.read(reinterpret_cast<char*>(data.data()), data.size());
-
-    uint32_t x = 0;
-    uint32_t y = header.height - 1;
-    for (size_t i = 0; i < data.size(); i += 3) {
-        // BMP image data is stored in BGR format
-        uint8_t b = data[i];
-        uint8_t g = data[i + 1];
-        uint8_t r = data[i + 2];
-        imagebuffer->setValue(x, y, RGBColor{r, g, b});
-        if (x == header.width - 1) {
-            y--;
-            x = 0;
-        } else {
-            x++;
-        }
+    file.read(reinterpret_cast<char*>(data.data()), header.image_size);
+    if (!file) {
+        throw std::runtime_error("Failed to read BMP file: " + filename);
     }
-
+    // std::vector<uint8_t> row_data(row_size); // temporary buffer for one row
+    uint32_t padding = (4 - (header.width * 3) % 4) % 4; // padding for each row
+    uint32_t index = 0;
+    for (int32_t y = header.height - 1; y >= 0; --y) {
+        for (uint32_t x = 0; x < header.width; ++x) {
+            size_t i = x * 3;
+            // BMP image data is stored in BGR format
+            uint8_t b = data[index++];
+            uint8_t g = data[index++];
+            uint8_t r = data[index++];
+            uint8_t a = 255;
+            // check if pixel is transparent
+            if (r == transparency_key.r && g == transparency_key.g && b == transparency_key.b && a == transparency_key.a) {
+                a = 0;
+            }
+            // set pixel color
+            imagebuffer->setValue(x, y, RGBColor{r, g, b, a});
+        }
+        index += padding; // skip padding bytes
+    }
     return imagebuffer;
 }
 
