@@ -148,12 +148,19 @@ class AutoDataBufferSampler : public BaseDataBufferSampler {
     }
 
 public:
+    AutoDataBufferSampler() : buffers_(nullptr) {}
+
     // accepts any number of DataBuffers
     template<typename... Buffers>
     AutoDataBufferSampler(std::shared_ptr<Buffers>... buffers) {
+        setBuffers(buffers...);
+    }
+
+    template<typename... Buffers>
+    void setBuffers(std::shared_ptr<Buffers>... buffers) {
         // ensure at least one buffer is provided
         static_assert(sizeof...(Buffers) > 0, "At least one buffer is required");
-        // ensure all provided buffers are of type q3::DataBuffer<T>
+        // ensure all provided buffers are of type std::shared_ptr<q3::DataBuffer<T>>
         static_assert((std::is_same_v<DataBuffer<typename std::remove_reference_t<Buffers>::value_type>, Buffers> && ...), "All buffers must be of type std::shared_ptr<q3::DataBuffer<T>>");
         // ensure all provided buffers are not nullptr
         if (((buffers == nullptr) || ...)) { throw std::invalid_argument("All buffers must be non-null"); }
