@@ -12,10 +12,9 @@ template<typename T> class Matrix4T;
 template<typename T>
 class Vector2T {
 public:
-    constexpr Vector2T() noexcept : x(), y() {}
-    constexpr Vector2T(T x, T y) noexcept : x(x), y(y) {}
-    // from Vector3
-    constexpr explicit Vector2T(const Vector3T<T>& other) noexcept;
+    constexpr Vector2T() noexcept : data{} {}
+    constexpr Vector2T(T x, T y) noexcept : data{x, y} {}
+    constexpr explicit Vector2T(const Vector3T<T>& other) noexcept : data{other.x, other.y} {}
 
     // +, -, *, /
     constexpr Vector2T<T> operator+(const Vector2T<T>& other) const noexcept { return {x + other.x, y + other.y}; }
@@ -52,10 +51,12 @@ public:
     // normalize
     constexpr Vector2T<T> normalized() const noexcept { return *this / norm(); }
 
-    T x, y;
+    union {
+        struct { T x, y; };
+        struct { T s, t; };
+        T data[2];
+    };
 };
-
-template<typename T> constexpr Vector2T<T>::Vector2T(const Vector3T<T>& other) noexcept : x(other.x), y(other.y) {}
 
 template<typename T> constexpr Vector2T<T> operator+(T scalar, const Vector2T<T>& vec) noexcept { return vec + scalar; }
 template<typename T> constexpr Vector2T<T> operator-(T scalar, const Vector2T<T>& vec) noexcept { return {scalar - vec.x, scalar - vec.y}; }
@@ -65,12 +66,11 @@ template<typename T> constexpr Vector2T<T> operator/(T scalar, const Vector2T<T>
 template<typename T>
 class Vector3T {
 public:
-    constexpr Vector3T() noexcept : x(), y(), z() {}
-    constexpr Vector3T(T x, T y, T z) noexcept : x(x), y(y), z(z) {}
-    constexpr Vector3T(const Vector2T<T>& other, T z) noexcept : x(other.x), y(other.y), z(z) {}
-    constexpr Vector3T(const Vector2T<T>& other) noexcept : x(other.x), y(other.y), z() {}
-    // from Vector4
-    constexpr explicit Vector3T(const Vector4T<T>& other) noexcept;
+    constexpr Vector3T() noexcept : data{} {}
+    constexpr Vector3T(T x, T y, T z) noexcept : data{x, y, z} {}
+    constexpr Vector3T(const Vector2T<T>& other, T z) noexcept : data{other.x, other.y, z} {}
+    constexpr Vector3T(const Vector2T<T>& other) noexcept : data{other.x, other.y, 0} {}
+    constexpr explicit Vector3T(const Vector4T<T>& other) noexcept : data{other.x, other.y, other.z} {}
 
     // +, -, *, /
     constexpr Vector3T<T> operator+(const Vector3T<T>& other) const noexcept { return {x + other.x, y + other.y, z + other.z}; }
@@ -109,10 +109,12 @@ public:
     // normalize
     constexpr Vector3T<T> normalized() const noexcept { return *this / norm(); }
 
-    T x, y, z;
+    union {
+        struct { T x, y, z; };
+        struct { T r, g, b; };
+        T data[3];
+    };
 };
-
-template<typename T> constexpr Vector3T<T>::Vector3T(const Vector4T<T>& other) noexcept : x(other.position.x), y(other.position.y), z(other.position.z) {}
 
 template<typename T> constexpr Vector3T<T> operator+(T scalar, const Vector3T<T>& vec) noexcept { return vec + scalar; }
 template<typename T> constexpr Vector3T<T> operator-(T scalar, const Vector3T<T>& vec) noexcept { return {scalar - vec.x, scalar - vec.y, scalar - vec.z}; }
@@ -122,62 +124,65 @@ template<typename T> constexpr Vector3T<T> operator/(T scalar, const Vector3T<T>
 template<typename T>
 class Vector4T {
 public:
-    constexpr Vector4T() noexcept : position(), w() {}
-    constexpr Vector4T(T x, T y, T z, T w) noexcept : position(x, y, z), w(w) {}
-    constexpr Vector4T(const Vector3T<T>& other, T w) noexcept : position(other), w(w) {}
-    constexpr Vector4T(const Vector3T<T>& other) noexcept : position(other), w() {}
+    constexpr Vector4T() noexcept : data{} {}
+    constexpr Vector4T(T x, T y, T z, T w) noexcept : data{x, y, z, w} {}
+    constexpr Vector4T(const Vector3T<T>& other, T w) noexcept : data{other.x, other.y, other.z, w} {}
+    constexpr Vector4T(const Vector3T<T>& other) noexcept : data{other.x, other.y, other.z, 0} {}
 
     // +, -, *, /
-    constexpr Vector4T<T> operator+(const Vector4T<T>& other) const noexcept { return {position + other.position, w + other.w}; }
-    constexpr Vector4T<T> operator-(const Vector4T<T>& other) const noexcept { return {position - other.position, w - other.w}; }
-    constexpr Vector4T<T> operator*(const Vector4T<T>& other) const noexcept { return {position * other.position, w * other.w}; }
-    constexpr Vector4T<T> operator/(const Vector4T<T>& other) const noexcept { return {position / other.position, w / other.w}; }
-    constexpr Vector4T<T> operator+(T scalar) const noexcept { return {position + scalar, w + scalar}; }
-    constexpr Vector4T<T> operator-(T scalar) const noexcept { return {position - scalar, w - scalar}; }
-    constexpr Vector4T<T> operator*(T scalar) const noexcept { return {position * scalar, w * scalar}; }
-    constexpr Vector4T<T> operator/(T scalar) const noexcept { return {position / scalar, w / scalar}; }
+    constexpr Vector4T<T> operator+(const Vector4T<T>& other) const noexcept { return {x + other.x, y + other.y, z + other.z, w + other.w}; }
+    constexpr Vector4T<T> operator-(const Vector4T<T>& other) const noexcept { return {x - other.x, y - other.y, z - other.z, w - other.w}; }
+    constexpr Vector4T<T> operator*(const Vector4T<T>& other) const noexcept { return {x * other.x, y * other.y, z * other.z, w * other.w}; }
+    constexpr Vector4T<T> operator/(const Vector4T<T>& other) const noexcept { return {x / other.x, y / other.y, z / other.z, w / other.w}; }
+    constexpr Vector4T<T> operator+(T scalar) const noexcept { return {x + scalar, y + scalar, z + scalar, w + scalar}; }
+    constexpr Vector4T<T> operator-(T scalar) const noexcept { return {x - scalar, y - scalar, z - scalar, w - scalar}; }
+    constexpr Vector4T<T> operator*(T scalar) const noexcept { return {x * scalar, y * scalar, z * scalar, w * scalar}; }
+    constexpr Vector4T<T> operator/(T scalar) const noexcept { return {x / scalar, y / scalar, z / scalar, w / scalar}; }
     template<typename U> friend constexpr Vector4T<U> operator+(U scalar, const Vector4T<U>& vec) noexcept;
     template<typename U> friend constexpr Vector4T<U> operator-(U scalar, const Vector4T<U>& vec) noexcept;
     template<typename U> friend constexpr Vector4T<U> operator*(U scalar, const Vector4T<U>& vec) noexcept;
     template<typename U> friend constexpr Vector4T<U> operator/(U scalar, const Vector4T<U>& vec) noexcept;
     // +=, -=, *=, /=
-    constexpr Vector4T<T>& operator+=(const Vector4T<T>& other) noexcept { position += other.position; w += other.w; return *this; }
-    constexpr Vector4T<T>& operator-=(const Vector4T<T>& other) noexcept { position -= other.position; w -= other.w; return *this; }
-    constexpr Vector4T<T>& operator*=(const Vector4T<T>& other) noexcept { position *= other.position; w *= other.w; return *this; }
-    constexpr Vector4T<T>& operator/=(const Vector4T<T>& other) noexcept { position /= other.position; w /= other.w; return *this; }
-    constexpr Vector4T<T>& operator+=(T scalar) noexcept { position += scalar; w += scalar; return *this; }
-    constexpr Vector4T<T>& operator-=(T scalar) noexcept { position -= scalar; w -= scalar; return *this; }
-    constexpr Vector4T<T>& operator*=(T scalar) noexcept { position *= scalar; w *= scalar; return *this; }
-    constexpr Vector4T<T>& operator/=(T scalar) noexcept { position /= scalar; w /= scalar; return *this; }
+    constexpr Vector4T<T>& operator+=(const Vector4T<T>& other) noexcept { x += other.x; y += other.y; z += other.z; w += other.w; return *this; }
+    constexpr Vector4T<T>& operator-=(const Vector4T<T>& other) noexcept { x -= other.x; y -= other.y; z -= other.z; w -= other.w; return *this; }
+    constexpr Vector4T<T>& operator*=(const Vector4T<T>& other) noexcept { x *= other.x; y *= other.y; z *= other.z; w *= other.w; return *this; }
+    constexpr Vector4T<T>& operator/=(const Vector4T<T>& other) noexcept { x /= other.x; y /= other.y; z /= other.z; w /= other.w; return *this; }
+    constexpr Vector4T<T>& operator+=(T scalar) noexcept { x += scalar; y += scalar; z += scalar; w += scalar; return *this; }
+    constexpr Vector4T<T>& operator-=(T scalar) noexcept { x -= scalar; y -= scalar; z -= scalar; w -= scalar; return *this; }
+    constexpr Vector4T<T>& operator*=(T scalar) noexcept { x *= scalar; y *= scalar; z *= scalar; w *= scalar; return *this; }
+    constexpr Vector4T<T>& operator/=(T scalar) noexcept { x /= scalar; y /= scalar; z /= scalar; w /= scalar; return *this; }
     // negation
-    constexpr Vector4T<T> operator-() const noexcept { return {-position, -w}; }
+    constexpr Vector4T<T> operator-() const noexcept { return {-x, -y, -z, -w}; }
     // comparison
-    constexpr bool operator==(const Vector4T<T>& other) const noexcept { return position == other.position && w == other.w; }
+    constexpr bool operator==(const Vector4T<T>& other) const noexcept { return x == other.x && y == other.y && z == other.z && w == other.w; }
     // dot product
-    constexpr T dot(const Vector4T<T>& other) const noexcept { return position.dot(other.position) + w * other.w; }
+    constexpr T dot(const Vector4T<T>& other) const noexcept { return x * other.x + y * other.y + z * other.z + w * other.w; }
     constexpr Vector4T<T> dot(const Matrix4T<T>& other) const noexcept;
     // norm
-    constexpr T norm() const noexcept { return std::sqrt(position.x * position.x + position.y * position.y + position.z * position.z + w * w); }
+    constexpr T norm() const noexcept { return std::sqrt(x * x + y * y + z * z + w * w); }
     // in-place normalize
     constexpr Vector4T<T>& normalize() noexcept { return *this /= norm(); }
     // normalize
     constexpr Vector4T<T> normalized() const noexcept { return *this / norm(); }
 
-    Vector3T<T> position;
-    T w;
+    union {
+        struct { T x, y, z, w; };
+        struct { T r, g, b, a; };
+        T data[4];
+    };
 };
 
 template<typename T> constexpr Vector4T<T> operator+(T scalar, const Vector4T<T>& vec) noexcept { return vec + scalar; }
-template<typename T> constexpr Vector4T<T> operator-(T scalar, const Vector4T<T>& vec) noexcept { return {scalar - vec.position, scalar - vec.w}; }
+template<typename T> constexpr Vector4T<T> operator-(T scalar, const Vector4T<T>& vec) noexcept { return {scalar - vec.x, scalar - vec.y, scalar - vec.z, scalar - vec.w}; }
 template<typename T> constexpr Vector4T<T> operator*(T scalar, const Vector4T<T>& vec) noexcept { return vec * scalar; }
-template<typename T> constexpr Vector4T<T> operator/(T scalar, const Vector4T<T>& vec) noexcept { return {scalar / vec.position, scalar / vec.w}; }
+template<typename T> constexpr Vector4T<T> operator/(T scalar, const Vector4T<T>& vec) noexcept { return {scalar / vec.x, scalar / vec.y, scalar / vec.z, scalar / vec.w}; }
 
 template<typename T> constexpr Vector4T<T> Vector4T<T>::dot(const Matrix4T<T>& other) const noexcept {
     return {
-        position.x * other[0][0] + position.y * other[1][0] + position.z * other[2][0] + w * other[3][0],
-        position.x * other[0][1] + position.y * other[1][1] + position.z * other[2][1] + w * other[3][1],
-        position.x * other[0][2] + position.y * other[1][2] + position.z * other[2][2] + w * other[3][2],
-        position.x * other[0][3] + position.y * other[1][3] + position.z * other[2][3] + w * other[3][3]
+        x * other[0][0] + y * other[1][0] + z * other[2][0] + w * other[3][0],
+        x * other[0][1] + y * other[1][1] + z * other[2][1] + w * other[3][1],
+        x * other[0][2] + y * other[1][2] + z * other[2][2] + w * other[3][2],
+        x * other[0][3] + y * other[1][3] + z * other[2][3] + w * other[3][3]
     };
 }
 
@@ -192,16 +197,16 @@ public:
     constexpr Matrix4T() noexcept : d_{} {}
     constexpr Matrix4T(const Vector4T<T>& v0, const Vector4T<T>& v1, const Vector4T<T>& v2, const Vector4T<T>& v3, Indexer<Major::ROW> = {}) noexcept
         : d_{
-            {v0.position.x, v0.position.y, v0.position.z, v0.w},
-            {v1.position.x, v1.position.y, v1.position.z, v1.w},
-            {v2.position.x, v2.position.y, v2.position.z, v2.w},
-            {v3.position.x, v3.position.y, v3.position.z, v3.w}
+            {v0.x, v0.y, v0.z, v0.w},
+            {v1.x, v1.y, v1.z, v1.w},
+            {v2.x, v2.y, v2.z, v2.w},
+            {v3.x, v3.y, v3.z, v3.w}
         } {}
     constexpr Matrix4T(const Vector4T<T>& v0, const Vector4T<T>& v1, const Vector4T<T>& v2, const Vector4T<T>& v3, Indexer<Major::COL>) noexcept
         : d_{
-            {v0.position.x, v1.position.x, v2.position.x, v3.position.x},
-            {v0.position.y, v1.position.y, v2.position.y, v3.position.y},
-            {v0.position.z, v1.position.z, v2.position.z, v3.position.z},
+            {v0.x, v1.x, v2.x, v3.x},
+            {v0.y, v1.y, v2.y, v3.y},
+            {v0.z, v1.z, v2.z, v3.z},
             {v0.w, v1.w, v2.w, v3.w}
         } {}
     constexpr Matrix4T(const T(&list)[4][4], Indexer<Major::ROW> = {}) noexcept {
@@ -283,6 +288,10 @@ public:
             {d_[3][0] / scalar, d_[3][1] / scalar, d_[3][2] / scalar, d_[3][3] / scalar}
         };
     }
+    template<typename U> friend constexpr Matrix4T<U> operator+(U scalar, const Matrix4T<U>& matrix) noexcept;
+    template<typename U> friend constexpr Matrix4T<U> operator-(U scalar, const Matrix4T<U>& matrix) noexcept;
+    template<typename U> friend constexpr Matrix4T<U> operator*(U scalar, const Matrix4T<U>& matrix) noexcept;
+    template<typename U> friend constexpr Matrix4T<U> operator/(U scalar, const Matrix4T<U>& matrix) noexcept;
     // +=, -=, *=, /=
     constexpr Matrix4T<T>& operator+=(const Matrix4T<T>& other) noexcept {
         d_[0][0] += other.d_[0][0]; d_[0][1] += other.d_[0][1]; d_[0][2] += other.d_[0][2]; d_[0][3] += other.d_[0][3];
@@ -339,12 +348,7 @@ public:
         d_[2][0] /= scalar; d_[2][1] /= scalar; d_[2][2] /= scalar; d_[2][3] /= scalar;
         d_[3][0] /= scalar; d_[3][1] /= scalar; d_[3][2] /= scalar; d_[3][3] /= scalar;
         return *this;
-    }
-    template<typename U> friend constexpr Matrix4T<U> operator+(U scalar, const Matrix4T<U>& matrix) noexcept;
-    template<typename U> friend constexpr Matrix4T<U> operator-(U scalar, const Matrix4T<U>& matrix) noexcept;
-    template<typename U> friend constexpr Matrix4T<U> operator*(U scalar, const Matrix4T<U>& matrix) noexcept;
-    template<typename U> friend constexpr Matrix4T<U> operator/(U scalar, const Matrix4T<U>& matrix) noexcept;
-    
+    }    
     // negation
     constexpr Matrix4T<T> operator-() const noexcept {
         return {
@@ -371,10 +375,10 @@ public:
     }
     constexpr Vector4T<T> dot(const Vector4T<T>& other) const noexcept {
         return {
-            d_[0][0] * other.position.x + d_[0][1] * other.position.y + d_[0][2] * other.position.z + d_[0][3] * other.w,
-            d_[1][0] * other.position.x + d_[1][1] * other.position.y + d_[1][2] * other.position.z + d_[1][3] * other.w,
-            d_[2][0] * other.position.x + d_[2][1] * other.position.y + d_[2][2] * other.position.z + d_[2][3] * other.w,
-            d_[3][0] * other.position.x + d_[3][1] * other.position.y + d_[3][2] * other.position.z + d_[3][3] * other.w
+            d_[0][0] * other.x + d_[0][1] * other.y + d_[0][2] * other.z + d_[0][3] * other.w,
+            d_[1][0] * other.x + d_[1][1] * other.y + d_[1][2] * other.z + d_[1][3] * other.w,
+            d_[2][0] * other.x + d_[2][1] * other.y + d_[2][2] * other.z + d_[2][3] * other.w,
+            d_[3][0] * other.x + d_[3][1] * other.y + d_[3][2] * other.z + d_[3][3] * other.w
         };
     }
 
@@ -419,7 +423,7 @@ public:
     constexpr Vertex(const Vector3& other) noexcept : Vector4(other, 1.0f) {}
     // conversion between Vertex and Vector4
     constexpr Vertex(const Vector4& other) noexcept : Vector4(other) {}
-    constexpr Vertex& operator=(const Vector4& other) noexcept { position.x = other.position.x; position.y = other.position.y; position.z = other.position.z; w = other.w; return *this; }
+    constexpr Vertex& operator=(const Vector4& other) noexcept { x = other.x; y = other.y; z = other.z; w = other.w; return *this; }
 };
 
 constexpr float degToRad(float deg) {
@@ -582,9 +586,9 @@ constexpr Matrix4 createViewMatrix(const Vector3& eye, const Vector3& center, co
 }
 
 struct Triangle {
-    const Vector3& v0;
-    const Vector3& v1;
-    const Vector3& v2;
+    Vector3 v0;
+    Vector3 v1;
+    Vector3 v2;
     // precomputed 1/w (reciprocal) for each vertex
     float v0_reciprocal_w;
     float v1_reciprocal_w;

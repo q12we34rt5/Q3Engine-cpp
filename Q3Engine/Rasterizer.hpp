@@ -102,12 +102,12 @@ private:
         viewportTransform(v1_);
         viewportTransform(v2_);
 
-        Triangle triangle{v0_.position, v1_.position, v2_.position, 1.0f / v0_.w, 1.0f / v1_.w, 1.0f / v2_.w};
+        Triangle triangle{Vector3(v0_), Vector3(v1_), Vector3(v2_), 1.0f / v0_.w, 1.0f / v1_.w, 1.0f / v2_.w};
 
-        int32_t bbox_min_x = std::min({static_cast<int32_t>(v0_.position.x), static_cast<int32_t>(v1_.position.x), static_cast<int32_t>(v2_.position.x)});
-        int32_t bbox_min_y = std::min({static_cast<int32_t>(v0_.position.y), static_cast<int32_t>(v1_.position.y), static_cast<int32_t>(v2_.position.y)});
-        int32_t bbox_max_x = std::max({static_cast<int32_t>(v0_.position.x), static_cast<int32_t>(v1_.position.x), static_cast<int32_t>(v2_.position.x)});
-        int32_t bbox_max_y = std::max({static_cast<int32_t>(v0_.position.y), static_cast<int32_t>(v1_.position.y), static_cast<int32_t>(v2_.position.y)});
+        int32_t bbox_min_x = std::min({static_cast<int32_t>(v0_.x), static_cast<int32_t>(v1_.x), static_cast<int32_t>(v2_.x)});
+        int32_t bbox_min_y = std::min({static_cast<int32_t>(v0_.y), static_cast<int32_t>(v1_.y), static_cast<int32_t>(v2_.y)});
+        int32_t bbox_max_x = std::max({static_cast<int32_t>(v0_.x), static_cast<int32_t>(v1_.x), static_cast<int32_t>(v2_.x)});
+        int32_t bbox_max_y = std::max({static_cast<int32_t>(v0_.y), static_cast<int32_t>(v1_.y), static_cast<int32_t>(v2_.y)});
         bbox_min_x = std::max(0, bbox_min_x);
         bbox_min_y = std::max(0, bbox_min_y);
         bbox_max_x = std::min(static_cast<int32_t>(target_framebuffer_ptr_->getWidth() - 1), bbox_max_x);
@@ -118,7 +118,7 @@ private:
                 Barycentric barycentric = calculateBarycentric(triangle, {static_cast<float>(x), static_cast<float>(y)});
                 if (barycentric.l0 < 0 || barycentric.l1 < 0 || barycentric.l2 < 0) continue;
 
-                float z = v0_.position.z * barycentric.l0 + v1_.position.z * barycentric.l1 + v2_.position.z * barycentric.l2;
+                float z = v0_.z * barycentric.l0 + v1_.z * barycentric.l1 + v2_.z * barycentric.l2;
                 if (z < 0.0f || z > 1.0f) continue;
                 if (z > target_depthbuffer_ptr_->getValue(x, y)) continue;
 
@@ -140,14 +140,14 @@ private:
         float height = static_cast<float>(target_framebuffer_ptr_->getHeight());
 
         // perspective division
-        v.position.x /= v.w;
-        v.position.y /= v.w;
-        v.position.z /= v.w;
+        v.x /= v.w;
+        v.y /= v.w;
+        v.z /= v.w;
 
         // NDC to screen space
-        v.position.x = (v.position.x + 1.0f) * width * 0.5f;
-        v.position.y = (1.0f - v.position.y) * height * 0.5f;
-        v.position.z = (v.position.z + 1.0f) * 0.5f;
+        v.x = (v.x + 1.0f) * width * 0.5f;
+        v.y = (1.0f - v.y) * height * 0.5f;
+        v.z = (v.z + 1.0f) * 0.5f;
     }
 
     inline void updateSuperSampleBuffers() {
